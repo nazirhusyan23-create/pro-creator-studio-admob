@@ -25,8 +25,7 @@ jobs:
 
       - name: Extract Project Files
         run: |
-          unzip my-admob-app.zip
-          cd my-admob-app
+          unzip -o my-admob-app.zip
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
