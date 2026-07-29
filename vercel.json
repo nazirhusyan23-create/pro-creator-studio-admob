@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "my-admob-app/www",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
