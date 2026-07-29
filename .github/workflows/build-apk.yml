@@ -11,15 +11,15 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/selection@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -46,7 +46,7 @@ jobs:
           $ANDROID_HOME/build-tools/33.0.0/apksigner sign --ks ../../../../release.keystore --ks-pass pass:mypassword123 --out app-release-signed.apk app-release-unsigned.apk
 
       - name: Upload Signed APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: signed-apk
           path: my-admob-app/android/app/build/outputs/apk/release/app-release-signed.apk
