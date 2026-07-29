@@ -1,0 +1,58 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run Project Generator
+        run: |
+          python create_project.py
+
+      - name: Extract Project Files
+        run: |
+          unzip my-admob-app.zip
+          cd my-admob-app
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install NPM Dependencies & Build Capacitor
+        run: |
+          cd my-admob-app
+          npm install
+          npx cap sync android
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build Gradle Android APK
+        run: |
+          cd my-admob-app/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Built APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Pro-Creator-Studio-Debug-APK
+          path: my-admob-app/android/app/build/outputs/apk/debug/app-debug.apk
