@@ -13,4 +13,4 @@ Log Data & Cookies:
 AdMob may collect standard device identifier data to serve personalized or non-personalized ads according to Google's policy.
 
 Contact Us:
-If you have any questions or suggestions about our Privacy Policy, contact us at your-email@gmail.com.
+If you have any questions or suggestions about our Privacy Policy, contact us at nazirhusyan.23@gmail.com
