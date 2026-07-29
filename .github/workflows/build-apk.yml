@@ -1,8 +1,8 @@
-name: Build Android APK
+name: Build Signed Android APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,67 +10,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Generate project files from create_project.py
-        run: python3 create_project.py
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/selection@v3
         with:
-          node-version: '20'
+          node-version: '18'
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
-      - name: Install project dependencies
-        working-directory: my-admob-app
-        run: npm install
+      - name: Run Python Script
+        run: python3 create_project.py
 
-      - name: Install Capacitor CLI locally (fallback if not in package.json)
-        working-directory: my-admob-app
-        run: npm install @capacitor/cli@^5.0.0 --no-save
+      - name: Extract Project
+        run: unzip my-admob-app.zip -d .
 
-      - name: Regenerate Android platform if incomplete
-        working-directory: my-admob-app
+      - name: Install Dependencies & Build Web Assets
         run: |
-          if [ -f "android/build.gradle" ]; then
-            echo "Full Android gradle project already present, skipping regeneration."
-          else
-            echo "android/ is missing or incomplete (no build.gradle) - removing and regenerating with Capacitor..."
-            rm -rf android
-            npx cap add android
-          fi
+          cd my-admob-app
+          npm install
+          npx cap add android
+          npx cap sync android
 
-      - name: Sync web assets into Android project
-        working-directory: my-admob-app
-        run: npx cap sync android
-
-      - name: Ensure AdMob App ID is present in manifest
-        working-directory: my-admob-app
+      - name: Generate Keystore & Build Signed APK
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if ! grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
-            echo "Injecting AdMob APPLICATION_ID meta-data into manifest..."
-            sed -i 's#</application>#\n        <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="ca-app-pub-9502060049942116~2420225297"/>\n    </application>#' "$MANIFEST"
-          else
-            echo "AdMob APPLICATION_ID already present in manifest, skipping."
-          fi
+          cd my-admob-app/android
+          keytool -genkey -v -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Developer, OU=App, O=Studio, L=City, S=State, C=US" -storepass mypassword123 -keypass mypassword123
+          ./gradlew assembleRelease
+          cd app/build/outputs/apk/release/
+          $ANDROID_HOME/build-tools/33.0.0/apksigner sign --ks ../../../../release.keystore --ks-pass pass:mypassword123 --out app-release-signed.apk app-release-unsigned.apk
 
-      - name: Grant execute permission for gradlew
-        working-directory: my-admob-app
-        run: chmod +x android/gradlew
-
-      - name: Build release APK
-        working-directory: my-admob-app/android
-        run: ./gradlew assembleRelease --stacktrace
-
-      - name: Upload Release APK artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v3
         with:
-          name: app-release-apk
-          path: my-admob-app/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: signed-apk
+          path: my-admob-app/android/app/build/outputs/apk/release/app-release-signed.apk
