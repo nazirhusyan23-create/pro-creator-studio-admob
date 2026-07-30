@@ -3,7 +3,8 @@
 create_project.py
 
 Generates a complete Capacitor Android app project ("my-admob-app") with
-all required files and packages it into "my-admob-app.zip".
+the verified App ID (ca-app-pub-9502060049942116~7401727267) and package
+name (com.procreator.studio), then packages it into "my-admob-app.zip".
 """
 
 import os
@@ -35,7 +36,7 @@ CAPACITOR_CONFIG_JSON = """{
   "bundledWebRuntime": false,
   "plugins": {
     "AdMob": {
-      "appId": "ca-app-pub-9502060049942116~2420225297"
+      "appId": "ca-app-pub-9502060049942116~7401727267"
     }
   }
 }
@@ -55,7 +56,7 @@ ANDROID_MANIFEST_XML = """<?xml version="1.0" encoding="utf-8"?>
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9502060049942116~2420225297"/>
+            android:value="ca-app-pub-9502060049942116~7401727267"/>
 
     </application>
 </manifest>
@@ -161,12 +162,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
   }
 </style>
 </head>
-<body class="bg-base text-white min-h-screen flex flex-col font-body">
-
-  <!-- TOP NATIVE ADMOB BANNER HOLDER -->
-  <div id="admob-banner-top" class="w-full bg-surface2 text-center py-1 shrink-0 select-none flex justify-center items-center min-h-[50px] border-b border-line">
-    <span class="text-[10px] text-muted tracking-widest uppercase">Ad Space</span>
-  </div>
+<body class="bg-base text-white min-h-screen flex flex-col font-body pb-16">
 
   <!-- HEADER -->
   <header class="px-5 pt-6 pb-2 shrink-0 max-w-2xl mx-auto w-full">
@@ -281,17 +277,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
     </section>
   </main>
 
-  <!-- BOTTOM NATIVE ADMOB BANNER HOLDER -->
-  <div id="admob-banner-bottom" class="w-full bg-surface2 text-center py-1 shrink-0 select-none flex justify-center items-center min-h-[50px] border-t border-line">
-    <span class="text-[10px] text-muted tracking-widest uppercase">Ad Space</span>
-  </div>
-
 <script>
 (function () {
   "use strict";
 
-  // ADMOB CONFIGURATION FOR APK
-  const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9502060049942116/3362340091';
+  // VERIFIED ADMOB IDS (STATUS: READY)
+  const ADMOB_BANNER_ID = 'ca-app-pub-9502060049942116/2227356434';
+  const ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9502060049942116/1968904359';
 
   let activeTab = 'captions';
   let selectedPlatform = 'instagram';
@@ -315,6 +307,28 @@ INDEX_HTML = r"""<!DOCTYPE html>
   const loadMoreBtn = document.getElementById('loadMoreBtn');
   const trendsSection = document.getElementById('trendsSection');
   const trendsList = document.getElementById('trendsList');
+
+  // Initialize Native Banner Ad when App Loads
+  document.addEventListener('deviceready', initAdMobBanner, false);
+  window.addEventListener('load', initAdMobBanner);
+
+  async function initAdMobBanner() {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+      try {
+        const { AdMob, BannerAdSize, BannerAdPosition } = window.Capacitor.Plugins;
+        await AdMob.initialize();
+        await AdMob.showBanner({
+          adId: ADMOB_BANNER_ID,
+          adSize: BannerAdSize.BANNER,
+          position: BannerAdPosition.BOTTOM_CENTER,
+          margin: 0,
+          isTesting: false
+        });
+      } catch (e) {
+        console.log("Banner Init Error:", e);
+      }
+    }
+  }
 
   tabCaptions.addEventListener('click', () => switchTab('captions'));
   tabBios.addEventListener('click', () => switchTab('bios'));
@@ -394,7 +408,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         onComplete();
       }
     } else {
-      // Fallback if testing in web browser
       onComplete();
     }
   }
@@ -558,7 +571,6 @@ def write_file(path, content):
 
 
 def create_project():
-    # Directories
     dirs = [
         ROOT_DIR,
         os.path.join(ROOT_DIR, "android", "app", "src", "main"),
@@ -567,7 +579,6 @@ def create_project():
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
-    # Files
     files = {
         os.path.join(ROOT_DIR, "package.json"): PACKAGE_JSON,
         os.path.join(ROOT_DIR, "capacitor.config.json"): CAPACITOR_CONFIG_JSON,
@@ -594,7 +605,7 @@ def zip_project():
 def main():
     create_project()
     zip_project()
-    print(f"Success: '{ROOT_DIR}' project generated and compressed into '{ZIP_NAME}'.")
+    print(f"Success: '{ROOT_DIR}' project generated with verified App ID into '{ZIP_NAME}'.")
 
 
 if __name__ == "__main__":
